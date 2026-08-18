@@ -48,6 +48,19 @@ export class SoilTestsService {
     return test;
   }
 
+  /**
+   * Most recent test for a field, or null if none exists yet. Ownership is NOT
+   * re-checked here — callers that already hold an owned Field (e.g.
+   * FertiliserPlanService, which just loaded every field on an owned farm)
+   * should call this directly rather than paying for a redundant ownership walk.
+   */
+  findLatestForFieldUnchecked(fieldId: string): Promise<SoilTest | null> {
+    return this.soilTestsRepository.findOne({
+      where: { fieldId },
+      order: { sampleDate: 'DESC', createdAt: 'DESC' },
+    });
+  }
+
   /** Combines the latest test's readings with the field's area/land use into an analysis. */
   async analyze(
     farmId: string,

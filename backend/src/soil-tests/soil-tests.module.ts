@@ -10,6 +10,6 @@ import { FieldsModule } from '../fields/fields.module';
   imports: [TypeOrmModule.forFeature([SoilTest]), FieldsModule],
   providers: [SoilTestsService, SoilIntelligenceService],
   controllers: [SoilTestsController],
-  exports: [SoilIntelligenceService],
+  exports: [SoilIntelligenceService, SoilTestsService],
 })
 export class SoilTestsModule {}

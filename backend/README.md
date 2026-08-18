@@ -1,17 +1,15 @@
 # FarmReturn API
 
-Backend foundation for FarmReturn: authentication, farm profile, land mapping
-(fields with PostGIS geometry), and soil intelligence. Built with NestJS,
-TypeORM and PostgreSQL/PostGIS.
+Backend for FarmReturn: authentication, farm profile, land mapping (fields
+with PostGIS geometry), soil intelligence, and whole-farm fertiliser
+planning. Built with NestJS, TypeORM and PostgreSQL/PostGIS.
 
-This is the **foundation layer** the rest of the FarmReturn spec builds on —
-fertiliser planning, livestock & housing, profitability and the AI assistant
-are deliberately not in here yet. See `docs/` (design mockups) and the
-product spec for what's next.
+Livestock & housing, profitability, group buying and the AI assistant are
+deliberately not in here yet — see the product spec for what's next.
 
 ## Stack
 
-- **NestJS** (TypeScript) — modular structure: `auth`, `users`, `farms`, `fields`, `soil-tests`
+- **NestJS** (TypeScript) — modular structure: `auth`, `users`, `farms`, `fields`, `soil-tests`, `fertiliser-plan`
 - **PostgreSQL + PostGIS** — fields store their boundary as a real `geometry(Polygon,4326)` column
 - **TypeORM** — migrations under `src/migrations`, no auto-sync outside local prototyping
 - **Passport + JWT** — stateless bearer-token auth
@@ -66,6 +64,25 @@ farm.
 
 Exercise it with `GET /farms/:farmId/fields/:fieldId/soil-tests/:testId/analysis`.
 
+## Fertiliser plan
+
+`FertiliserPlanService` (`src/fertiliser-plan/`) aggregates every field's
+latest soil test through `SoilIntelligenceService`, sums the resulting
+lime/phosphorus/potassium requirements across the farm, and converts each
+into a purchasing quantity and cost via a small reference product catalog
+(`fertiliser_products`, seeded by migration — one straight, single-nutrient
+product per category, so the kg-of-nutrient → tonnes-of-product conversion
+stays exact rather than guessed). Fields with no soil test yet are reported
+separately rather than silently skipped.
+
+**Nitrogen (protected urea, CAN, ...) is deliberately not included.**
+Unlike pH/P/K, nitrogen requirement isn't derivable from a soil test — it
+depends on stocking rate, grassland N index and nitrates-regulation limits,
+none of which this API models yet. The endpoint's `notes` field says so
+explicitly rather than the response silently omitting it.
+
+Exercise it with `GET /farms/:farmId/fertiliser-plan`.
+
 ## API surface
 
 All routes except `/auth/register` and `/auth/login` require
@@ -83,6 +100,7 @@ All routes except `/auth/register` and `/auth/login` require
 | POST/GET | `/farms/:farmId/fields/:fieldId/soil-tests` | create / list soil test history |
 | GET | `.../soil-tests/:testId` | one test |
 | GET | `.../soil-tests/:testId/analysis` | rules-engine recommendation |
+| GET | `/farms/:farmId/fertiliser-plan` | whole-farm lime/P/K purchasing plan |
 
 Full request/response shapes: run the server and open `/api/docs`.
 
@@ -92,12 +110,13 @@ Full request/response shapes: run the server and open `/api/docs`.
 npm test
 ```
 
-Currently covers the soil intelligence rules engine, including the exact
-Field 04 scenario from the design mockups (6.4ha grazing field, pH 6.2 → a
-16t maintenance lime dressing at €512).
+Covers the soil intelligence rules engine (including the exact Field 04
+scenario from the design mockups: 6.4ha grazing field, pH 6.2 → a 16t
+maintenance lime dressing at €512) and the fertiliser plan's nutrient →
+product tonnage conversion.
 
 ## What's deliberately not here yet
 
-Fertiliser plan aggregation, livestock & housing, profitability, group
-buying and the AI assistant all depend on this foundation layer and are
-scoped for follow-up work, module by module.
+Livestock & housing, profitability, group buying and the AI assistant all
+depend on this foundation layer and are scoped for follow-up work, module
+by module.
