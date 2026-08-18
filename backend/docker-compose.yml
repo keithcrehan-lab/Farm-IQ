@@ -1,0 +1,20 @@
+services:
+  postgres:
+    image: postgis/postgis:16-3.4
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: farmreturn
+      POSTGRES_PASSWORD: farmreturn
+      POSTGRES_DB: farmreturn
+    ports:
+      - "5432:5432"
+    volumes:
+      - farmreturn-db:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U farmreturn"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+volumes:
+  farmreturn-db:
