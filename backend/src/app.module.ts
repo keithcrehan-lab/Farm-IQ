@@ -7,12 +7,15 @@ import { Farm } from './farms/farm.entity';
 import { Field } from './fields/field.entity';
 import { SoilTest } from './soil-tests/soil-test.entity';
 import { FertiliserProduct } from './fertiliser-plan/fertiliser-product.entity';
+import { LivestockGroup } from './livestock/livestock-group.entity';
+import { Building } from './livestock/building.entity';
 import { AuthModule } from './auth/auth.module';
 import { UsersModule } from './users/users.module';
 import { FarmsModule } from './farms/farms.module';
 import { FieldsModule } from './fields/fields.module';
 import { SoilTestsModule } from './soil-tests/soil-tests.module';
 import { FertiliserPlanModule } from './fertiliser-plan/fertiliser-plan.module';
+import { LivestockModule } from './livestock/livestock.module';
 
 @Module({
   imports: [
@@ -24,7 +27,7 @@ import { FertiliserPlanModule } from './fertiliser-plan/fertiliser-plan.module';
         return {
           type: 'postgres' as const,
           url: app.databaseUrl,
-          entities: [User, Farm, Field, SoilTest, FertiliserProduct],
+          entities: [User, Farm, Field, SoilTest, FertiliserProduct, LivestockGroup, Building],
           synchronize: app.dbSynchronize,
           autoLoadEntities: true,
         };
@@ -36,6 +39,7 @@ import { FertiliserPlanModule } from './fertiliser-plan/fertiliser-plan.module';
     FieldsModule,
     SoilTestsModule,
     FertiliserPlanModule,
+    LivestockModule,
   ],
 })
 export class AppModule {}

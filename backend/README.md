@@ -1,15 +1,16 @@
 # FarmReturn API
 
 Backend for FarmReturn: authentication, farm profile, land mapping (fields
-with PostGIS geometry), soil intelligence, and whole-farm fertiliser
-planning. Built with NestJS, TypeORM and PostgreSQL/PostGIS.
+with PostGIS geometry), soil intelligence, whole-farm fertiliser planning,
+and livestock & winter housing. Built with NestJS, TypeORM and
+PostgreSQL/PostGIS.
 
-Livestock & housing, profitability, group buying and the AI assistant are
-deliberately not in here yet — see the product spec for what's next.
+Profitability, group buying and the AI assistant are deliberately not in
+here yet — see the product spec for what's next.
 
 ## Stack
 
-- **NestJS** (TypeScript) — modular structure: `auth`, `users`, `farms`, `fields`, `soil-tests`, `fertiliser-plan`
+- **NestJS** (TypeScript) — modular structure: `auth`, `users`, `farms`, `fields`, `soil-tests`, `fertiliser-plan`, `livestock`
 - **PostgreSQL + PostGIS** — fields store their boundary as a real `geometry(Polygon,4326)` column
 - **TypeORM** — migrations under `src/migrations`, no auto-sync outside local prototyping
 - **Passport + JWT** — stateless bearer-token auth
@@ -83,6 +84,29 @@ explicitly rather than the response silently omitting it.
 
 Exercise it with `GET /farms/:farmId/fertiliser-plan`.
 
+## Livestock & housing
+
+Two simple registers plus a deterministic capacity check:
+
+- **Livestock groups** (`livestock_groups`) — a farm's headcount per category
+  (cow, bull, calf, weanling, replacement heifer, finishing; ewe, ram, lamb,
+  hogget). This is MVP-level category counting, not individual animal
+  records yet (see spec section 15 for that future model). `species` is
+  always derived server-side from `category`, never client-supplied, so an
+  invalid species/category pairing can't exist. Recording a count is a `PUT`
+  (upsert keyed on farm + category) — re-entering "20 cows" replaces the
+  figure, it doesn't add a second row.
+- **Buildings** (`buildings`) — sheds with a type and head capacity.
+- **Housing summary** — `summarizeHousing` (`src/livestock/housing-intelligence.ts`)
+  sums registered shed capacity against projected winter cattle numbers and
+  reports the shortfall (or surplus), same pure/deterministic shape as
+  `SoilIntelligenceService`. **Scoped to cattle only** — sheep are
+  conventionally out-wintered on Irish farms rather than housed, so sheep
+  headcount isn't counted against shed capacity; a farm that does house
+  sheep is a gap to revisit, not something silently assumed away.
+
+Exercise it with `GET /farms/:farmId/housing-summary`.
+
 ## API surface
 
 All routes except `/auth/register` and `/auth/login` require
@@ -101,6 +125,11 @@ All routes except `/auth/register` and `/auth/login` require
 | GET | `.../soil-tests/:testId` | one test |
 | GET | `.../soil-tests/:testId/analysis` | rules-engine recommendation |
 | GET | `/farms/:farmId/fertiliser-plan` | whole-farm lime/P/K purchasing plan |
+| PUT | `/farms/:farmId/livestock-groups` | record/replace a category's headcount |
+| GET/DELETE | `/farms/:farmId/livestock-groups[/:groupId]` | |
+| POST/GET | `/farms/:farmId/buildings` | create / list sheds |
+| PATCH/DELETE | `/farms/:farmId/buildings/:buildingId` | |
+| GET | `/farms/:farmId/housing-summary` | winter capacity vs projected stock |
 
 Full request/response shapes: run the server and open `/api/docs`.
 
@@ -112,11 +141,11 @@ npm test
 
 Covers the soil intelligence rules engine (including the exact Field 04
 scenario from the design mockups: 6.4ha grazing field, pH 6.2 → a 16t
-maintenance lime dressing at €512) and the fertiliser plan's nutrient →
-product tonnage conversion.
+maintenance lime dressing at €512), the fertiliser plan's nutrient → product
+tonnage conversion, and the housing capacity check (including the exact
+mockup scenario: 71 projected cattle vs 64 registered spaces → shortfall of 7).
 
 ## What's deliberately not here yet
 
-Livestock & housing, profitability, group buying and the AI assistant all
-depend on this foundation layer and are scoped for follow-up work, module
-by module.
+Profitability, group buying and the AI assistant all depend on this
+foundation layer and are scoped for follow-up work, module by module.

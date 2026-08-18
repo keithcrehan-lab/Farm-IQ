@@ -6,6 +6,8 @@ import { Farm } from './farms/farm.entity';
 import { Field } from './fields/field.entity';
 import { SoilTest } from './soil-tests/soil-test.entity';
 import { FertiliserProduct } from './fertiliser-plan/fertiliser-product.entity';
+import { LivestockGroup } from './livestock/livestock-group.entity';
+import { Building } from './livestock/building.entity';
 
 config();
 
@@ -17,7 +19,7 @@ config();
 export const AppDataSource = new DataSource({
   type: 'postgres',
   url: process.env.DATABASE_URL ?? 'postgres://farmreturn:farmreturn@localhost:5432/farmreturn',
-  entities: [User, Farm, Field, SoilTest, FertiliserProduct],
+  entities: [User, Farm, Field, SoilTest, FertiliserProduct, LivestockGroup, Building],
   migrations: ['src/migrations/*.ts'],
   synchronize: false,
 });
