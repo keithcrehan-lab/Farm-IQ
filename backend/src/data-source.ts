@@ -8,6 +8,8 @@ import { SoilTest } from './soil-tests/soil-test.entity';
 import { FertiliserProduct } from './fertiliser-plan/fertiliser-product.entity';
 import { LivestockGroup } from './livestock/livestock-group.entity';
 import { Building } from './livestock/building.entity';
+import { Enterprise } from './profitability/enterprise.entity';
+import { Transaction } from './profitability/transaction.entity';
 
 config();
 
@@ -19,7 +21,17 @@ config();
 export const AppDataSource = new DataSource({
   type: 'postgres',
   url: process.env.DATABASE_URL ?? 'postgres://farmreturn:farmreturn@localhost:5432/farmreturn',
-  entities: [User, Farm, Field, SoilTest, FertiliserProduct, LivestockGroup, Building],
+  entities: [
+    User,
+    Farm,
+    Field,
+    SoilTest,
+    FertiliserProduct,
+    LivestockGroup,
+    Building,
+    Enterprise,
+    Transaction,
+  ],
   migrations: ['src/migrations/*.ts'],
   synchronize: false,
 });
