@@ -13,6 +13,8 @@ import { Enterprise } from './profitability/enterprise.entity';
 import { Transaction } from './profitability/transaction.entity';
 import { GroupBuyOffer } from './group-buy/group-buy-offer.entity';
 import { GroupBuyParticipant } from './group-buy/group-buy-participant.entity';
+import { Animal } from './animals/animal.entity';
+import { AnimalWeight } from './animals/animal-weight.entity';
 import { AuthModule } from './auth/auth.module';
 import { UsersModule } from './users/users.module';
 import { FarmsModule } from './farms/farms.module';
@@ -24,6 +26,7 @@ import { ProfitabilityModule } from './profitability/profitability.module';
 import { GroupBuyModule } from './group-buy/group-buy.module';
 import { AssistantModule } from './assistant/assistant.module';
 import { DashboardModule } from './dashboard/dashboard.module';
+import { AnimalsModule } from './animals/animals.module';
 
 @Module({
   imports: [
@@ -47,6 +50,8 @@ import { DashboardModule } from './dashboard/dashboard.module';
             Transaction,
             GroupBuyOffer,
             GroupBuyParticipant,
+            Animal,
+            AnimalWeight,
           ],
           synchronize: app.dbSynchronize,
           autoLoadEntities: true,
@@ -64,6 +69,7 @@ import { DashboardModule } from './dashboard/dashboard.module';
     GroupBuyModule,
     AssistantModule,
     DashboardModule,
+    AnimalsModule,
   ],
 })
 export class AppModule {}

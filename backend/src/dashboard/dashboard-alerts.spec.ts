@@ -2,6 +2,7 @@ import {
   buildGroupBuyAlert,
   buildHousingAlert,
   buildSoilAlert,
+  buildWeightAlert,
   sortAlerts,
 } from './dashboard-alerts';
 
@@ -98,6 +99,23 @@ describe('buildGroupBuyAlert', () => {
         personalized: { estimatedSavingEur: 0 },
       }),
     ).toBeNull();
+  });
+});
+
+describe('buildWeightAlert', () => {
+  it('matches the mockup: 8 cattle averaging 615kg', () => {
+    const weights = [610, 612, 615, 617, 614, 618, 613, 621];
+    const alert = buildWeightAlert(weights);
+    expect(alert).toEqual({
+      severity: 'amber',
+      category: 'weight',
+      title: '8 cattle near target weight',
+      detail: 'Averaging 615kg — review selling window',
+    });
+  });
+
+  it('returns null with no animals near target', () => {
+    expect(buildWeightAlert([])).toBeNull();
   });
 });
 

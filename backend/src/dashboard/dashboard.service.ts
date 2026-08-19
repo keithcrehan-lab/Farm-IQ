@@ -7,11 +7,16 @@ import { HousingService } from '../livestock/housing.service';
 import { ProfitabilityService } from '../profitability/profitability.service';
 import { GroupBuyOffersService } from '../group-buy/group-buy-offers.service';
 import { GroupBuyParticipantsService } from '../group-buy/group-buy-participants.service';
+import { AnimalsService } from '../animals/animals.service';
+import { AnimalWeightsService } from '../animals/animal-weights.service';
+import { AnimalStatus } from '../animals/animal.entity';
+import { isNearTargetWeight } from '../animals/weight-intelligence';
 import {
   DashboardAlert,
   buildGroupBuyAlert,
   buildHousingAlert,
   buildSoilAlert,
+  buildWeightAlert,
   sortAlerts,
 } from './dashboard-alerts';
 
@@ -34,6 +39,8 @@ export class DashboardService {
     private readonly profitabilityService: ProfitabilityService,
     private readonly groupBuyOffersService: GroupBuyOffersService,
     private readonly groupBuyParticipantsService: GroupBuyParticipantsService,
+    private readonly animalsService: AnimalsService,
+    private readonly animalWeightsService: AnimalWeightsService,
   ) {}
 
   async getDashboard(farmId: string, ownerId: string): Promise<Dashboard> {
@@ -73,6 +80,21 @@ export class DashboardService {
       const offerAlert = buildGroupBuyAlert(offer.productName, view);
       if (offerAlert) alerts.push(offerAlert);
     }
+
+    const activeAnimals = (await this.animalsService.findAllForFarmUnchecked(farmId)).filter(
+      (animal) => animal.status === AnimalStatus.ACTIVE && animal.targetWeightKg !== null,
+    );
+    const nearTargetWeightsKg: number[] = [];
+    for (const animal of activeAnimals) {
+      const history = await this.animalWeightsService.findAllForAnimalUnchecked(animal.id);
+      if (history.length === 0) continue;
+      const latestWeightKg = Number(history[history.length - 1].weightKg);
+      if (isNearTargetWeight(latestWeightKg, Number(animal.targetWeightKg))) {
+        nearTargetWeightsKg.push(latestWeightKg);
+      }
+    }
+    const weightAlert = buildWeightAlert(nearTargetWeightsKg);
+    if (weightAlert) alerts.push(weightAlert);
 
     return {
       farm: { name: farm.name, county: farm.county },

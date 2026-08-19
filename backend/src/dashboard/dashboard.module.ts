@@ -7,6 +7,7 @@ import { SoilTestsModule } from '../soil-tests/soil-tests.module';
 import { LivestockModule } from '../livestock/livestock.module';
 import { ProfitabilityModule } from '../profitability/profitability.module';
 import { GroupBuyModule } from '../group-buy/group-buy.module';
+import { AnimalsModule } from '../animals/animals.module';
 
 @Module({
   imports: [
@@ -16,6 +17,7 @@ import { GroupBuyModule } from '../group-buy/group-buy.module';
     LivestockModule,
     ProfitabilityModule,
     GroupBuyModule,
+    AnimalsModule,
   ],
   providers: [DashboardService],
   controllers: [DashboardController],

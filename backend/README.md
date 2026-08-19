@@ -2,15 +2,16 @@
 
 Backend for FarmReturn: authentication, farm profile, land mapping (fields
 with PostGIS geometry), soil intelligence, whole-farm fertiliser planning,
-livestock & winter housing, profitability, group buying, an AI assistant,
-and a home dashboard tying it all together. Built with NestJS, TypeORM,
-PostgreSQL/PostGIS, and the Gemini API.
+livestock & winter housing, individual animal & weight records, profitability,
+group buying, an AI assistant, and a home dashboard tying it all together.
+Built with NestJS, TypeORM, PostgreSQL/PostGIS, and the Gemini API.
 
-This covers all eight MVP modules from the product spec.
+This covers all eight MVP modules from the product spec, plus individual
+animal records (spec section 15) beyond the original category-count model.
 
 ## Stack
 
-- **NestJS** (TypeScript) — modular structure: `auth`, `users`, `farms`, `fields`, `soil-tests`, `fertiliser-plan`, `livestock`, `profitability`, `group-buy`, `assistant`, `dashboard`
+- **NestJS** (TypeScript) — modular structure: `auth`, `users`, `farms`, `fields`, `soil-tests`, `fertiliser-plan`, `livestock`, `animals`, `profitability`, `group-buy`, `assistant`, `dashboard`
 - **Gemini API** (`@google/genai`) — the assistant's language model
 - **PostgreSQL + PostGIS** — fields store their boundary as a real `geometry(Polygon,4326)` column
 - **TypeORM** — migrations under `src/migrations`, no auto-sync outside local prototyping
@@ -219,6 +220,34 @@ rejects invalid input (missing question, bad history role) before ever
 reaching Gemini. **The actual Gemini call itself is unverified by me** —
 add your own key and try `/ask` for real; let me know if anything looks off.
 
+## Individual animal records
+
+Spec section 15's per-animal model, alongside (not replacing) the category
+counts in `livestock_groups`:
+
+- **Animals** (`animals`) — tag number (unique per farm), category
+  (species derived server-side, same `SPECIES_BY_CATEGORY` pattern as
+  livestock groups), breed, sex, DOB, dam/sire, purchase/sale details, and
+  a farmer-set `targetWeightKg`. Dam/sire are free-text tag references, not
+  foreign keys — a sire is very often an external AI bull with no record of
+  its own here, and forcing every dam/sire into a registered Animal would
+  make entry needlessly rigid for the common case.
+- **Weights** (`animal_weights`) — dated weighings, history retained.
+  `weight-intelligence.ts` (pure, unit-tested) computes:
+  - average daily gain (kg/day) between the first and most recent weighing
+  - a weight projected N days forward at that ADG
+  - progress toward the farmer's own `targetWeightKg` (never an inferred
+    target), and days remaining to reach it at the current ADG
+  - a documented, revisitable "near target" threshold (90%, see
+    `NEAR_TARGET_WEIGHT_THRESHOLD_PCT`) — the honest basis for the
+    dashboard's weight alert, not a guess
+
+Exercise it with `GET /farms/:farmId/animals/:animalId/weights/analysis`.
+
+This unlocks the dashboard's weight alert (below). Animal-level
+profitability (spec section 26 — linking `transactions` to an `animalId`)
+is a natural next extension, not built yet.
+
 ## Dashboard
 
 The Home Dashboard mockup's "needs your attention" action feed (spec
@@ -233,16 +262,17 @@ already-known number is worth surfacing:
 
 - 🔴 **red** — winter housing shortfall (from `HousingService`)
 - 🟠 **amber** — one per field with an open soil recommendation (from
-  `SoilIntelligenceService`)
+  `SoilIntelligenceService`), and one aggregating every active animal
+  within the near-target-weight threshold of its own farmer-set
+  `targetWeightKg` (from the animals module above)
 - 🟢 **green** — a group-buy offer the farm hasn't joined yet, with a real,
   positive estimated saving (from `GroupBuyParticipantsService` — an offer
   with no auto-fillable requirement and no farmer-supplied quantity
   produces no alert rather than a guessed saving)
 
-**Deliberately missing the mockup's other two alert types** (cattle near
-target weight, cows due to calve) — both need per-animal weight history and
-breeding dates, which this API doesn't track yet (spec section 15's
-individual animal records, category-count only today). Not simulated here.
+**Deliberately missing the mockup's calving alert** ("cows due to calve")
+— that needs breeding/service dates, a separate future module (spec
+section 16) not built yet. Not simulated here.
 
 `marginDeltaEur` is `null`, not a fabricated zero, when there's no
 prior-year profitability data to compare against — same honesty rule as
@@ -285,6 +315,10 @@ All routes except `/auth/register` and `/auth/login` require
 | GET | `/farms/:farmId/assistant/context` | the data snapshot the assistant answers from |
 | POST | `/farms/:farmId/assistant/ask` | ask a question (needs `GEMINI_API_KEY`) |
 | GET | `/farms/:farmId/dashboard` | prioritized "needs your attention" alert feed |
+| POST/GET | `/farms/:farmId/animals` | register / list individual animals |
+| GET/PATCH/DELETE | `/farms/:farmId/animals/:animalId` | |
+| POST/GET | `.../animals/:animalId/weights` | record / list weighings |
+| GET | `.../animals/:animalId/weights/analysis` | ADG, target progress, projection |
 
 Full request/response shapes: run the server and open `/api/docs`.
 
@@ -304,16 +338,17 @@ a synthetic year-over-year scenario matching the spec's stated €7,400 margin
 improvement attributed to real category deltas), the group-buy calculator
 (including the exact mockup figures: 8t @ €560/t vs €480/t = €640 saving,
 and 126t committed against a 150t threshold), the assistant's prompt
-construction (history-turn role mapping, snapshot+question framing), and the
+construction (history-turn role mapping, snapshot+question framing), the
 dashboard's alert generation (including the exact mockup housing figures —
-71 vs 64 → shortfall of 7 — and severity sort order).
+71 vs 64 → shortfall of 7 — and severity sort order), and the weight
+intelligence engine (including the exact mockup weight-tracking scenario:
+342kg → 397kg → 468kg over March–July, and the mockup's ~615kg/650kg
+near-target figures).
 
 ## What's deliberately not here yet
 
-Everything in the product spec's MVP list (section 40) is now built. Real
-next steps: persisting assistant conversation history server-side,
-individual animal records (spec section 15) beyond the current
-category-count model — which would also unlock the two dashboard alert
-types (cattle near target weight, cows due to calve) this API deliberately
-doesn't fabricate today — and a real frontend. None of this has a UI yet;
-every module here is a JSON API.
+Real next steps: persisting assistant conversation history server-side,
+breeding/service-date tracking (spec section 16 — would unlock the
+dashboard's remaining calving alert), animal-level profitability (spec
+section 26), and a real frontend. None of this has a UI yet; every module
+here is a JSON API.
