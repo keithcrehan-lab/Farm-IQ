@@ -11,6 +11,8 @@ import { LivestockGroup } from './livestock/livestock-group.entity';
 import { Building } from './livestock/building.entity';
 import { Enterprise } from './profitability/enterprise.entity';
 import { Transaction } from './profitability/transaction.entity';
+import { GroupBuyOffer } from './group-buy/group-buy-offer.entity';
+import { GroupBuyParticipant } from './group-buy/group-buy-participant.entity';
 import { AuthModule } from './auth/auth.module';
 import { UsersModule } from './users/users.module';
 import { FarmsModule } from './farms/farms.module';
@@ -19,6 +21,7 @@ import { SoilTestsModule } from './soil-tests/soil-tests.module';
 import { FertiliserPlanModule } from './fertiliser-plan/fertiliser-plan.module';
 import { LivestockModule } from './livestock/livestock.module';
 import { ProfitabilityModule } from './profitability/profitability.module';
+import { GroupBuyModule } from './group-buy/group-buy.module';
 
 @Module({
   imports: [
@@ -40,6 +43,8 @@ import { ProfitabilityModule } from './profitability/profitability.module';
             Building,
             Enterprise,
             Transaction,
+            GroupBuyOffer,
+            GroupBuyParticipant,
           ],
           synchronize: app.dbSynchronize,
           autoLoadEntities: true,
@@ -54,6 +59,7 @@ import { ProfitabilityModule } from './profitability/profitability.module';
     FertiliserPlanModule,
     LivestockModule,
     ProfitabilityModule,
+    GroupBuyModule,
   ],
 })
 export class AppModule {}

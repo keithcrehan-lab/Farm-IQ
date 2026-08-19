@@ -16,5 +16,6 @@ import { SoilTestsModule } from '../soil-tests/soil-tests.module';
   ],
   providers: [FertiliserPlanService],
   controllers: [FertiliserPlanController],
+  exports: [FertiliserPlanService],
 })
 export class FertiliserPlanModule {}

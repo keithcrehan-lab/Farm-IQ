@@ -10,6 +10,8 @@ import { LivestockGroup } from './livestock/livestock-group.entity';
 import { Building } from './livestock/building.entity';
 import { Enterprise } from './profitability/enterprise.entity';
 import { Transaction } from './profitability/transaction.entity';
+import { GroupBuyOffer } from './group-buy/group-buy-offer.entity';
+import { GroupBuyParticipant } from './group-buy/group-buy-participant.entity';
 
 config();
 
@@ -31,6 +33,8 @@ export const AppDataSource = new DataSource({
     Building,
     Enterprise,
     Transaction,
+    GroupBuyOffer,
+    GroupBuyParticipant,
   ],
   migrations: ['src/migrations/*.ts'],
   synchronize: false,
