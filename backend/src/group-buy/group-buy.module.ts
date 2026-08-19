@@ -17,6 +17,6 @@ import { FertiliserPlanModule } from '../fertiliser-plan/fertiliser-plan.module'
   ],
   providers: [GroupBuyOffersService, GroupBuyParticipantsService],
   controllers: [GroupBuyOffersController, GroupBuyParticipationController],
-  exports: [GroupBuyOffersService],
+  exports: [GroupBuyOffersService, GroupBuyParticipantsService],
 })
 export class GroupBuyModule {}

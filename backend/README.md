@@ -2,15 +2,15 @@
 
 Backend for FarmReturn: authentication, farm profile, land mapping (fields
 with PostGIS geometry), soil intelligence, whole-farm fertiliser planning,
-livestock & winter housing, profitability, group buying, and an AI
-assistant. Built with NestJS, TypeORM, PostgreSQL/PostGIS, and the Gemini
-API.
+livestock & winter housing, profitability, group buying, an AI assistant,
+and a home dashboard tying it all together. Built with NestJS, TypeORM,
+PostgreSQL/PostGIS, and the Gemini API.
 
 This covers all eight MVP modules from the product spec.
 
 ## Stack
 
-- **NestJS** (TypeScript) — modular structure: `auth`, `users`, `farms`, `fields`, `soil-tests`, `fertiliser-plan`, `livestock`, `profitability`, `group-buy`, `assistant`
+- **NestJS** (TypeScript) — modular structure: `auth`, `users`, `farms`, `fields`, `soil-tests`, `fertiliser-plan`, `livestock`, `profitability`, `group-buy`, `assistant`, `dashboard`
 - **Gemini API** (`@google/genai`) — the assistant's language model
 - **PostgreSQL + PostGIS** — fields store their boundary as a real `geometry(Polygon,4326)` column
 - **TypeORM** — migrations under `src/migrations`, no auto-sync outside local prototyping
@@ -219,6 +219,37 @@ rejects invalid input (missing question, bad history role) before ever
 reaching Gemini. **The actual Gemini call itself is unverified by me** —
 add your own key and try `/ask` for real; let me know if anything looks off.
 
+## Dashboard
+
+The Home Dashboard mockup's "needs your attention" action feed (spec
+section 30) — one endpoint that scans real data across the modules above
+and returns a prioritized list of alerts.
+
+`sortAlerts`/`buildHousingAlert`/`buildSoilAlert`/`buildGroupBuyAlert`
+(`src/dashboard/dashboard-alerts.ts`) are pure and unit-tested independently
+of the DB, same pattern as every other rules engine in this API — no new
+agronomic or financial logic here, only the decision of when an
+already-known number is worth surfacing:
+
+- 🔴 **red** — winter housing shortfall (from `HousingService`)
+- 🟠 **amber** — one per field with an open soil recommendation (from
+  `SoilIntelligenceService`)
+- 🟢 **green** — a group-buy offer the farm hasn't joined yet, with a real,
+  positive estimated saving (from `GroupBuyParticipantsService` — an offer
+  with no auto-fillable requirement and no farmer-supplied quantity
+  produces no alert rather than a guessed saving)
+
+**Deliberately missing the mockup's other two alert types** (cattle near
+target weight, cows due to calve) — both need per-animal weight history and
+breeding dates, which this API doesn't track yet (spec section 15's
+individual animal records, category-count only today). Not simulated here.
+
+`marginDeltaEur` is `null`, not a fabricated zero, when there's no
+prior-year profitability data to compare against — same honesty rule as
+`ProfitabilitySummary.previousYear.hasData`.
+
+Exercise it with `GET /farms/:farmId/dashboard`.
+
 ## API surface
 
 All routes except `/auth/register` and `/auth/login` require
@@ -253,6 +284,7 @@ All routes except `/auth/register` and `/auth/login` require
 | PUT/DELETE | `/farms/:farmId/group-buy-offers/:offerId/join` | join / leave |
 | GET | `/farms/:farmId/assistant/context` | the data snapshot the assistant answers from |
 | POST | `/farms/:farmId/assistant/ask` | ask a question (needs `GEMINI_API_KEY`) |
+| GET | `/farms/:farmId/dashboard` | prioritized "needs your attention" alert feed |
 
 Full request/response shapes: run the server and open `/api/docs`.
 
@@ -271,14 +303,17 @@ the exact whole-farm/enterprise/field figures from spec sections 23–25, and
 a synthetic year-over-year scenario matching the spec's stated €7,400 margin
 improvement attributed to real category deltas), the group-buy calculator
 (including the exact mockup figures: 8t @ €560/t vs €480/t = €640 saving,
-and 126t committed against a 150t threshold), and the assistant's prompt
-construction (history-turn role mapping, snapshot+question framing).
+and 126t committed against a 150t threshold), the assistant's prompt
+construction (history-turn role mapping, snapshot+question framing), and the
+dashboard's alert generation (including the exact mockup housing figures —
+71 vs 64 → shortfall of 7 — and severity sort order).
 
 ## What's deliberately not here yet
 
 Everything in the product spec's MVP list (section 40) is now built. Real
 next steps: persisting assistant conversation history server-side,
-proactive intelligence / notifications (spec sections 29-31), individual
-animal records (spec section 15) beyond the current category-count model,
-and a real frontend — none of this has a UI yet, every module here is a
-JSON API.
+individual animal records (spec section 15) beyond the current
+category-count model — which would also unlock the two dashboard alert
+types (cattle near target weight, cows due to calve) this API deliberately
+doesn't fabricate today — and a real frontend. None of this has a UI yet;
+every module here is a JSON API.
