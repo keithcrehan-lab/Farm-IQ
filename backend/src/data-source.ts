@@ -14,6 +14,8 @@ import { GroupBuyOffer } from './group-buy/group-buy-offer.entity';
 import { GroupBuyParticipant } from './group-buy/group-buy-participant.entity';
 import { Animal } from './animals/animal.entity';
 import { AnimalWeight } from './animals/animal-weight.entity';
+import { Conversation } from './assistant/conversation.entity';
+import { Message } from './assistant/message.entity';
 
 config();
 
@@ -39,6 +41,8 @@ export const AppDataSource = new DataSource({
     GroupBuyParticipant,
     Animal,
     AnimalWeight,
+    Conversation,
+    Message,
   ],
   migrations: ['src/migrations/*.ts'],
   synchronize: false,

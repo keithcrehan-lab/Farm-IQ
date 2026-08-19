@@ -15,6 +15,8 @@ import { GroupBuyOffer } from './group-buy/group-buy-offer.entity';
 import { GroupBuyParticipant } from './group-buy/group-buy-participant.entity';
 import { Animal } from './animals/animal.entity';
 import { AnimalWeight } from './animals/animal-weight.entity';
+import { Conversation } from './assistant/conversation.entity';
+import { Message } from './assistant/message.entity';
 import { AuthModule } from './auth/auth.module';
 import { UsersModule } from './users/users.module';
 import { FarmsModule } from './farms/farms.module';
@@ -52,6 +54,8 @@ import { AnimalsModule } from './animals/animals.module';
             GroupBuyParticipant,
             Animal,
             AnimalWeight,
+            Conversation,
+            Message,
           ],
           synchronize: app.dbSynchronize,
           autoLoadEntities: true,

@@ -206,19 +206,29 @@ the comment in `.env.example`.
 - **`GET /farms/:farmId/assistant/context`** returns that snapshot on its
   own — no Gemini call, no key required. Useful for debugging, and for a
   frontend to show "what FarmReturn knows" alongside an answer.
-- **`POST /farms/:farmId/assistant/ask`** — `{ question, history? }` (history
-  is client-supplied prior turns, not persisted server-side yet) — builds
-  the snapshot, sends it to Gemini with the question, and returns
-  `{ answer, context }`.
+- **Conversations persist server-side** (`conversations` / `messages`).
+  `POST /farms/:farmId/assistant/ask` — `{ question, conversationId? }` —
+  omit `conversationId` to start a new thread (its id comes back in the
+  response); pass one back to continue it, and its prior messages become
+  the model's history. **Gemini is called before anything is persisted** —
+  a failed call (unconfigured key, quota, network) leaves no half-written
+  conversation and no empty thread behind. `GET
+  /farms/:farmId/assistant/conversations` lists a farm's threads;
+  `GET .../conversations/:conversationId` returns one with its full
+  message history; `DELETE` removes it (cascades to its messages).
 
 **What I verified without a real key** (I can't obtain one myself): typecheck
 against the real `@google/genai` type definitions, lint, build, the full
 unit test suite, and — live, against Postgres — that `GET .../context`
-returns correct real data pulled from every module, and that `POST
-.../ask` fails with a clear 503 rather than crashing when unconfigured, and
-rejects invalid input (missing question, bad history role) before ever
-reaching Gemini. **The actual Gemini call itself is unverified by me** —
-add your own key and try `/ask` for real; let me know if anything looks off.
+returns correct real data pulled from every module, that `POST .../ask`
+fails with a clear 503 rather than crashing when unconfigured (and leaves
+the conversations list empty, confirming nothing was persisted), that a
+made-up `conversationId` 404s cleanly, and that the exact persistence
+sequence `AssistantService.ask` runs on a successful call — conversation
+creation, ordered message inserts, the `updatedAt` bump, and cascade
+delete — all behave correctly when exercised directly against the schema.
+**The actual Gemini call itself is unverified by me** — add your own key
+and try `/ask` for real; let me know if anything looks off.
 
 ## Individual animal records
 
@@ -314,6 +324,8 @@ All routes except `/auth/register` and `/auth/login` require
 | PUT/DELETE | `/farms/:farmId/group-buy-offers/:offerId/join` | join / leave |
 | GET | `/farms/:farmId/assistant/context` | the data snapshot the assistant answers from |
 | POST | `/farms/:farmId/assistant/ask` | ask a question (needs `GEMINI_API_KEY`) |
+| GET | `/farms/:farmId/assistant/conversations` | list this farm's conversation threads |
+| GET/DELETE | `.../conversations/:conversationId` | messages / delete a thread |
 | GET | `/farms/:farmId/dashboard` | prioritized "needs your attention" alert feed |
 | POST/GET | `/farms/:farmId/animals` | register / list individual animals |
 | GET/PATCH/DELETE | `/farms/:farmId/animals/:animalId` | |
@@ -347,8 +359,10 @@ near-target figures).
 
 ## What's deliberately not here yet
 
-Real next steps: persisting assistant conversation history server-side,
-breeding/service-date tracking (spec section 16 — would unlock the
-dashboard's remaining calving alert), animal-level profitability (spec
-section 26), and a real frontend. None of this has a UI yet; every module
+The backend now covers everything in the product spec's MVP list plus
+individual animal records, weight intelligence, and persisted assistant
+conversations. Real next steps: breeding/service-date tracking (spec
+section 16 — would unlock the dashboard's remaining calving alert),
+animal-level profitability (spec section 26 — linking `transactions` to an
+`animalId`), and a real frontend. None of this has a UI yet; every module
 here is a JSON API.

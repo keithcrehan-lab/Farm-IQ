@@ -1,6 +1,11 @@
 import { Module } from '@nestjs/common';
+import { TypeOrmModule } from '@nestjs/typeorm';
+import { Conversation } from './conversation.entity';
+import { Message } from './message.entity';
 import { AssistantContextService } from './assistant-context.service';
 import { GeminiClientService } from './gemini-client.service';
+import { ConversationsService } from './conversations.service';
+import { ConversationsController } from './conversations.controller';
 import { AssistantService } from './assistant.service';
 import { AssistantController } from './assistant.controller';
 import { FarmsModule } from '../farms/farms.module';
@@ -13,6 +18,7 @@ import { GroupBuyModule } from '../group-buy/group-buy.module';
 
 @Module({
   imports: [
+    TypeOrmModule.forFeature([Conversation, Message]),
     FarmsModule,
     FieldsModule,
     SoilTestsModule,
@@ -21,7 +27,7 @@ import { GroupBuyModule } from '../group-buy/group-buy.module';
     ProfitabilityModule,
     GroupBuyModule,
   ],
-  providers: [AssistantContextService, GeminiClientService, AssistantService],
-  controllers: [AssistantController],
+  providers: [AssistantContextService, GeminiClientService, ConversationsService, AssistantService],
+  controllers: [AssistantController, ConversationsController],
 })
 export class AssistantModule {}
