@@ -1,0 +1,62 @@
+:root {
+  --bg: oklch(97% 0.012 95);
+  --surface: oklch(99% 0.006 95);
+  --surface-2: oklch(95.3% 0.014 95);
+  --border: oklch(88% 0.02 100);
+  --ink: oklch(24% 0.025 155);
+  --ink-2: oklch(46% 0.02 155);
+  --ink-3: oklch(63% 0.014 120);
+  --forest: oklch(33% 0.085 152);
+  --forest-2: oklch(28% 0.075 152);
+  --gold: oklch(76% 0.135 78);
+  --gold-deep: oklch(48% 0.12 65);
+  --gold-tint: oklch(94% 0.05 85);
+  --red: oklch(57% 0.19 26);
+  --red-tint: oklch(94% 0.045 26);
+  --amber: oklch(70% 0.15 62);
+  --amber-tint: oklch(94% 0.05 75);
+  --green-ok: oklch(56% 0.13 152);
+  --green-tint: oklch(93% 0.045 152);
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body,
+#root {
+  height: 100%;
+}
+
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--ink);
+  font-family: 'Manrope', sans-serif;
+  -webkit-font-smoothing: antialiased;
+}
+
+a {
+  color: var(--gold-deep);
+  text-decoration: none;
+}
+a:hover {
+  color: var(--forest);
+}
+
+.serif {
+  font-family: 'Instrument Serif', Georgia, serif;
+}
+
+.mono {
+  font-family: 'IBM Plex Mono', ui-monospace, monospace;
+}
+
+button {
+  font-family: inherit;
+}
+
+input {
+  font-family: inherit;
+}
