@@ -2,15 +2,16 @@
 
 Backend for FarmReturn: authentication, farm profile, land mapping (fields
 with PostGIS geometry), soil intelligence, whole-farm fertiliser planning,
-livestock & winter housing, profitability, and group buying. Built with
-NestJS, TypeORM and PostgreSQL/PostGIS.
+livestock & winter housing, profitability, group buying, and an AI
+assistant. Built with NestJS, TypeORM, PostgreSQL/PostGIS, and the Gemini
+API.
 
-The AI assistant is deliberately not in here yet — see the product spec for
-what's next.
+This covers all eight MVP modules from the product spec.
 
 ## Stack
 
-- **NestJS** (TypeScript) — modular structure: `auth`, `users`, `farms`, `fields`, `soil-tests`, `fertiliser-plan`, `livestock`, `profitability`, `group-buy`
+- **NestJS** (TypeScript) — modular structure: `auth`, `users`, `farms`, `fields`, `soil-tests`, `fertiliser-plan`, `livestock`, `profitability`, `group-buy`, `assistant`
+- **Gemini API** (`@google/genai`) — the assistant's language model
 - **PostgreSQL + PostGIS** — fields store their boundary as a real `geometry(Polygon,4326)` column
 - **TypeORM** — migrations under `src/migrations`, no auto-sync outside local prototyping
 - **Passport + JWT** — stateless bearer-token auth
@@ -24,9 +25,12 @@ what's next.
 cp .env.example .env
 docker compose up -d           # Postgres + PostGIS on localhost:5432
 npm install
-npm run migration:run          # creates the schema (users, farms, fields, soil_tests)
+npm run migration:run          # creates/updates the schema
 npm run start:dev              # http://localhost:3000, docs at /api/docs
 ```
+
+Everything works with `.env.example`'s defaults except the AI assistant,
+which needs a Gemini API key — see below.
 
 ## Domain model
 
@@ -171,6 +175,50 @@ purchasing deal a farmer can join:
   it doesn't silently track a farm's fertiliser plan afterwards, the same
   way a real order confirmation wouldn't quietly change on you.
 
+## AI assistant
+
+Spec sections 28-29's conversational assistant — answers a farmer's
+question using this farm's real data, never invented figures. It runs on
+**Gemini** (the `@google/genai` SDK), and enforces "rules calculate, AI
+interprets" (spec section 9) directly in the system prompt: the model is
+told every number it's given was computed by this API's own deterministic
+engines and must be treated as ground truth — never recomputed,
+contradicted, or supplemented with a guess.
+
+**Setup**: get a free key at [aistudio.google.com/apikey](https://aistudio.google.com/apikey)
+(no card required) and set `GEMINI_API_KEY` in `.env`. Leave it blank and
+the assistant endpoints respond with a clear 503 "not configured" error
+instead of crashing — every other module works fine without it.
+
+**On the free tier, Google may use your prompts to improve their
+products.** Fine for development; switch to a paid key (same SDK, same
+code, just billing) before any real farmer data goes through this — see
+the comment in `.env.example`.
+
+- **`AssistantContextService`** (`assistant-context.service.ts`) builds a
+  `FarmSnapshot` fresh on every question by calling straight into the same
+  services every other endpoint uses — fields + latest soil test + soil
+  analysis per field, the whole-farm fertiliser plan, the housing summary,
+  this year's profitability, and any group-buy offers relevant to the
+  farm's county. No separate or looser calculation exists for the
+  assistant to draw from.
+- **`GET /farms/:farmId/assistant/context`** returns that snapshot on its
+  own — no Gemini call, no key required. Useful for debugging, and for a
+  frontend to show "what FarmReturn knows" alongside an answer.
+- **`POST /farms/:farmId/assistant/ask`** — `{ question, history? }` (history
+  is client-supplied prior turns, not persisted server-side yet) — builds
+  the snapshot, sends it to Gemini with the question, and returns
+  `{ answer, context }`.
+
+**What I verified without a real key** (I can't obtain one myself): typecheck
+against the real `@google/genai` type definitions, lint, build, the full
+unit test suite, and — live, against Postgres — that `GET .../context`
+returns correct real data pulled from every module, and that `POST
+.../ask` fails with a clear 503 rather than crashing when unconfigured, and
+rejects invalid input (missing question, bad history role) before ever
+reaching Gemini. **The actual Gemini call itself is unverified by me** —
+add your own key and try `/ask` for real; let me know if anything looks off.
+
 ## API surface
 
 All routes except `/auth/register` and `/auth/login` require
@@ -203,6 +251,8 @@ All routes except `/auth/register` and `/auth/login` require
 | GET | `/group-buy-offers/:offerId` | offer detail (platform-wide, no personalization) |
 | GET | `/farms/:farmId/group-buy-offers/:offerId` | personalized offer + progress + join status |
 | PUT/DELETE | `/farms/:farmId/group-buy-offers/:offerId/join` | join / leave |
+| GET | `/farms/:farmId/assistant/context` | the data snapshot the assistant answers from |
+| POST | `/farms/:farmId/assistant/ask` | ask a question (needs `GEMINI_API_KEY`) |
 
 Full request/response shapes: run the server and open `/api/docs`.
 
@@ -219,11 +269,16 @@ tonnage conversion, the housing capacity check (71 projected cattle vs 64
 registered spaces → shortfall of 7), the profitability calculator (including
 the exact whole-farm/enterprise/field figures from spec sections 23–25, and
 a synthetic year-over-year scenario matching the spec's stated €7,400 margin
-improvement attributed to real category deltas), and the group-buy
-calculator (including the exact mockup figures: 8t @ €560/t vs €480/t = €640
-saving, and 126t committed against a 150t threshold).
+improvement attributed to real category deltas), the group-buy calculator
+(including the exact mockup figures: 8t @ €560/t vs €480/t = €640 saving,
+and 126t committed against a 150t threshold), and the assistant's prompt
+construction (history-turn role mapping, snapshot+question framing).
 
 ## What's deliberately not here yet
 
-The AI assistant depends on this foundation layer and is scoped for
-follow-up work.
+Everything in the product spec's MVP list (section 40) is now built. Real
+next steps: persisting assistant conversation history server-side,
+proactive intelligence / notifications (spec sections 29-31), individual
+animal records (spec section 15) beyond the current category-count model,
+and a real frontend — none of this has a UI yet, every module here is a
+JSON API.

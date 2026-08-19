@@ -15,5 +15,6 @@ import { FieldsModule } from '../fields/fields.module';
   imports: [TypeOrmModule.forFeature([Enterprise, Transaction]), FarmsModule, FieldsModule],
   providers: [EnterprisesService, TransactionsService, ProfitabilityService],
   controllers: [EnterprisesController, TransactionsController, ProfitabilityController],
+  exports: [ProfitabilityService],
 })
 export class ProfitabilityModule {}

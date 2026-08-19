@@ -5,6 +5,9 @@ export interface AppConfig {
   dbSynchronize: boolean;
   jwtSecret: string;
   jwtExpiresIn: string;
+  /** Empty string when unset — the assistant module treats that as "not configured" rather than crashing. */
+  geminiApiKey: string;
+  geminiModel: string;
 }
 
 export default (): { app: AppConfig } => ({
@@ -16,5 +19,7 @@ export default (): { app: AppConfig } => ({
     dbSynchronize: process.env.DB_SYNCHRONIZE === 'true',
     jwtSecret: process.env.JWT_SECRET ?? 'change-me-in-production',
     jwtExpiresIn: process.env.JWT_EXPIRES_IN ?? '7d',
+    geminiApiKey: process.env.GEMINI_API_KEY ?? '',
+    geminiModel: process.env.GEMINI_MODEL ?? 'gemini-2.5-flash',
   },
 });

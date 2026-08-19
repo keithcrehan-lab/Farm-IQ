@@ -22,6 +22,7 @@ import { FertiliserPlanModule } from './fertiliser-plan/fertiliser-plan.module';
 import { LivestockModule } from './livestock/livestock.module';
 import { ProfitabilityModule } from './profitability/profitability.module';
 import { GroupBuyModule } from './group-buy/group-buy.module';
+import { AssistantModule } from './assistant/assistant.module';
 
 @Module({
   imports: [
@@ -60,6 +61,7 @@ import { GroupBuyModule } from './group-buy/group-buy.module';
     LivestockModule,
     ProfitabilityModule,
     GroupBuyModule,
+    AssistantModule,
   ],
 })
 export class AppModule {}
