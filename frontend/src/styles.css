@@ -1,22 +1,40 @@
 :root {
-  --bg: oklch(97% 0.012 95);
-  --surface: oklch(99% 0.006 95);
-  --surface-2: oklch(95.3% 0.014 95);
-  --border: oklch(88% 0.02 100);
-  --ink: oklch(24% 0.025 155);
-  --ink-2: oklch(46% 0.02 155);
-  --ink-3: oklch(63% 0.014 120);
+  --bg: oklch(96.5% 0.014 95);
+  --surface: oklch(99.2% 0.004 95);
+  --surface-2: oklch(95% 0.016 92);
+  --surface-raised: oklch(100% 0 0);
+  --border: oklch(89% 0.018 95);
+  --border-soft: oklch(93% 0.014 95);
+  --ink: oklch(22% 0.03 155);
+  --ink-2: oklch(45% 0.022 155);
+  --ink-3: oklch(62% 0.016 120);
+
   --forest: oklch(33% 0.085 152);
-  --forest-2: oklch(28% 0.075 152);
-  --gold: oklch(76% 0.135 78);
+  --forest-2: oklch(26% 0.075 153);
+  --forest-3: oklch(19% 0.055 155);
+  --forest-tint: oklch(93% 0.03 152);
+
+  --gold: oklch(78% 0.135 82);
+  --gold-2: oklch(70% 0.15 74);
   --gold-deep: oklch(48% 0.12 65);
-  --gold-tint: oklch(94% 0.05 85);
+  --gold-tint: oklch(94.5% 0.045 85);
+
   --red: oklch(57% 0.19 26);
   --red-tint: oklch(94% 0.045 26);
   --amber: oklch(70% 0.15 62);
   --amber-tint: oklch(94% 0.05 75);
   --green-ok: oklch(56% 0.13 152);
   --green-tint: oklch(93% 0.045 152);
+
+  /* Warm, low-chroma shadows read as premium; pure black shadows read cheap. */
+  --shadow-color: 152deg 25% 12%;
+  --shadow-xs: 0 1px 2px hsl(var(--shadow-color) / 0.06);
+  --shadow-sm: 0 1px 2px hsl(var(--shadow-color) / 0.05), 0 4px 10px -4px hsl(var(--shadow-color) / 0.10);
+  --shadow-md: 0 2px 6px -2px hsl(var(--shadow-color) / 0.10), 0 12px 28px -10px hsl(var(--shadow-color) / 0.16);
+  --shadow-lg: 0 8px 16px -6px hsl(var(--shadow-color) / 0.16), 0 28px 56px -20px hsl(var(--shadow-color) / 0.24);
+  --shadow-hero: 0 20px 44px -18px hsl(var(--shadow-color) / 0.42), 0 4px 14px -6px hsl(var(--shadow-color) / 0.28);
+
+  --ease: cubic-bezier(0.2, 0.8, 0.2, 1);
 }
 
 * {
@@ -35,6 +53,7 @@ body {
   color: var(--ink);
   font-family: 'Manrope', sans-serif;
   -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
 }
 
 a {
@@ -47,16 +66,54 @@ a:hover {
 
 .serif {
   font-family: 'Instrument Serif', Georgia, serif;
+  letter-spacing: -0.01em;
 }
 
 .mono {
   font-family: 'IBM Plex Mono', ui-monospace, monospace;
 }
 
+.tabular {
+  font-variant-numeric: tabular-nums;
+}
+
 button {
   font-family: inherit;
 }
 
-input {
+input,
+select {
   font-family: inherit;
+}
+
+::selection {
+  background: var(--gold);
+  color: var(--forest-3);
+}
+
+:focus-visible {
+  outline: 2px solid var(--gold-deep);
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+
+/* Fine dot-grid texture for hero panels — reads as craft, not decoration. */
+.grain {
+  background-image: radial-gradient(rgba(255, 255, 255, 0.09) 1px, transparent 1px);
+  background-size: 14px 14px;
+}
+
+@keyframes fr-fade-up {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.fr-in {
+  animation: fr-fade-up 0.36s var(--ease) both;
 }
